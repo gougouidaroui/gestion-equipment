@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">Notifications</h2>
+                <h3 class="mb-3">Demandes d'Équipement</h3>
+                <table class="table table-striped mb-5">
+                    <thead>
+                        <tr>
+                            <th>Objet</th>
+                            <th>Demandeur</th>
+                            <th>Équipements</th>
+                            <th>Quantité</th>
+                            <th>Motif</th>
+                            <th>Service</th>
+                            <th>État</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for demande in equipement_demandes %}
+                        <tr>
+                            <td>{{ demande.objet }}</td>
+                            <td>{{ demande.demandeur.email }}</td>
+                            <td>
+                                {% for equipement in demande.equipements.all %}
+                                    {{ equipement.designation }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>{{ demande.quantity }}</td>
+                            <td>{{ demande.motif|truncatechars:50 }}</td>
+                            <td>{{ demande.service }}</td>
+                            <td>{{ demande.etat }}</td>
+                            <td>{{ demande.date_creation|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if demande.etat == 'En attente' %}
+                                    <a href="{% url 'demande_equipement_approve' demande.pk %}" class="btn btn-sm btn-primary">Traiter</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="9">Aucune demande d'équipement.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <h3 class="mb-3">Demandes d'Intervention</h3>
+                <table class="table table-striped mb-5">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Demandeur</th>
+                            <th>Service</th>
+                            <th>Poste</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for demande in intervention_demandes %}
+                        <tr>
+                            <td>{{ demande.date|date:"d/m/Y H:i" }}</td>
+                            <td>{{ demande.demandeur.email }}</td>
+                            <td>{{ demande.service }}</td>
+                            <td>{{ demande.poste }}</td>
+                            <td>{{ demande.description|truncatechars:50 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5">Aucune demande d'intervention.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <h3 class="mb-3">Notifications</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Message</th>
+                            <th>Personne</th>
+                            <th>Lu</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for notification in notifications %}
+                        <tr>
+                            <td>{{ notification.message }}</td>
+                            <td>{{ notification.personne.email }}</td>
+                            <td>{{ notification.read|yesno:"Oui,Non" }}</td>
+                            <td>
+                                {% if not notification.read %}
+                                    <form method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="notification_id" value="{{ notification.pk }}">
+                                        <button type="submit" class="btn btn-sm btn-primary">Marquer comme lu</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">Aucune notification.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>

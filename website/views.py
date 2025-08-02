@@ -1,30 +1,37 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import EquipmentForm, MaterialTypeForm, MaterialRequestForm, SignUpForm, LoginForm
-from .models import Equipment, MaterialRequest, AssignmentHistory, MaterialType
+from .forms import CustomUserCreationForm, EquipmentForm, AffectationForm, DemandeEquipementForm, DemandeInterventionForm, LoginForm, UserUpdateForm
+from .models import Equipment, Affectation, DemandeEquipement, DemandeIntervention, Notification
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models import Q
 
-def register_view(request):
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('home')
-    else:
-        form = SignUpForm()
-    return render(request, 'register.html', {'form': form})
+def is_admin(user):
+    return user.is_superuser
+
+def is_gestionnaire(user):
+    return user.is_staff and not user.is_superuser
+
+def is_fonctionnaire(user):
+    return not user.is_staff and not user.is_superuser
 
 def login_view(request):
     if request.method == 'POST':
-        form = LoginForm(request, data=request.POST)
+        form = LoginForm(request.POST)
         if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('home')
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            try:
+                user = User.objects.get(email=email)
+                user = authenticate(request, username=user.username, password=password)
+                if user is not None:
+                    login(request, user)
+                    return redirect('dashboard')
+                else:
+                    form.add_error(None, "Mot de passe incorrect.")
+            except User.DoesNotExist:
+                form.add_error('email', "Aucun utilisateur trouvé avec cet email.")
     else:
         form = LoginForm()
     return render(request, 'login.html', {'form': form})
@@ -33,144 +40,275 @@ def logout_view(request):
     logout(request)
     return redirect('home')
 
-
-@login_required
 def home(request):
-    if request.user.is_staff:
-        equipements = Equipment.objects.all()
-        demandes = MaterialRequest.objects.filter(history=False)
-    else:
-        equipements = Equipment.objects.filter(etat='Disponible')
-        demandes = MaterialRequest.objects.filter(demandeur=request.user, history=False)
-    return render(request, 'home.html', {'equipements': equipements, 'demandes': demandes})
+    return render(request, 'home.html')
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(is_admin)
+def user_create(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            role = form.cleaned_data['role']
+            user.email = form.cleaned_data['email']
+            if role == 'admin':
+                user.is_superuser = True
+                user.is_staff = True
+            elif role == 'gestionnaire':
+                user.is_staff = True
+            user.save()
+            return redirect('user_list')
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'user_form.html', {'form': form})
+
+@login_required
+@user_passes_test(is_admin)
+def modify_user(request, pk):
+    user = User.objects.get(pk=pk)
+    if request.method == 'POST':
+        form = UserUpdateForm(request.POST, instance=user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            role = form.cleaned_data['role']
+            user.is_superuser = role == 'admin'
+            user.is_staff = role in ['admin', 'gestionnaire']
+            user.email = form.cleaned_data['email']
+            user.save()
+            return redirect('user_list')
+    else:
+        form = UserUpdateForm(instance=user, initial={'role': 'admin' if user.is_superuser else 'gestionnaire' if user.is_staff else 'fonctionnaire'})
+    return render(request, 'modify_user.html', {'form': form, 'user': user})
+
+
+@login_required
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
+def gestion_equipement(request):
+    equipements = Equipment.objects.all()
+    return render(request, 'gestion_equipement.html', {'equipements': equipements})
+
+@login_required
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
+def gestion_affectation(request):
+    affectations = Affectation.objects.all().order_by('-date_affectation')
+    return render(request, 'gestion_affectation.html', {'affectations': affectations})
+
+@login_required
+@user_passes_test(is_admin)
+def user_list(request):
+    users = User.objects.all()
+    return render(request, 'user_list.html', {'users': users})
+
+@login_required
+def dashboard(request):
+    if is_admin(request.user) or is_gestionnaire(request.user):
+        return redirect('stock')
+    return redirect('mes_equipements')
+
+@login_required
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
+def stock(request):
+    type_filter = request.GET.get('type', '')
+    sous_type_filter = request.GET.get('sous_type', '')
+    emplacement_filter = request.GET.get('emplacement', '')
+    affecte_filter = request.GET.get('affecte', '')
+
+    equipements = Equipment.objects.all()
+    if type_filter:
+        equipements = equipements.filter(type__icontains=type_filter)
+    if sous_type_filter:
+        equipements = equipements.filter(sous_type__icontains=sous_type_filter)
+    if emplacement_filter:
+        equipements = equipements.filter(emplacement__icontains=emplacement_filter)
+    if affecte_filter:
+        equipements = equipements.filter(affecte=affecte_filter == 'True')
+
+    return render(request, 'stock.html', {
+        'equipements': equipements,
+        'type_filter': type_filter,
+        'sous_type_filter': sous_type_filter,
+        'emplacement_filter': emplacement_filter,
+        'affecte_filter': affecte_filter,
+    })
+
+@login_required
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
 def equipment_create(request):
     if request.method == 'POST':
         form = EquipmentForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('home')
+            return redirect('stock')
     else:
         form = EquipmentForm()
     return render(request, 'equipment_form.html', {'form': form})
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
 def equipment_update(request, pk):
     equipment = Equipment.objects.get(pk=pk)
     if request.method == 'POST':
         form = EquipmentForm(request.POST, instance=equipment)
         if form.is_valid():
             form.save()
-            return redirect('home')
+            return redirect('stock')
     else:
         form = EquipmentForm(instance=equipment)
     return render(request, 'equipment_form.html', {'form': form})
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
 def equipment_delete(request, pk):
     equipment = Equipment.objects.get(pk=pk)
     if request.method == 'POST':
         equipment.delete()
-        return redirect('home')
-    return render(request, 'equipment_form.html', {'form': None, 'equipment': equipment})
+        return redirect('stock')
+    return render(request, 'equipment_delete.html', {'equipment': equipment})
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
-def material_type_create(request):
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
+def affectation_create(request):
     if request.method == 'POST':
-        form = MaterialTypeForm(request.POST)
+        form = AffectationForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('home')
+            affectation = form.save(commit=False)
+            affectation.equipement.affecte = True
+            affectation.equipement.save()
+            affectation.save()
+            Notification.objects.create(
+                message=f"Nouvelle affectation: {affectation.equipement} à {affectation.fonctionnaire}",
+                personne=User.objects.filter(is_staff=True).first()
+            )
+            return redirect('notifications')
     else:
-        form = MaterialTypeForm()
-    return render(request, 'material_type_form.html', {'form': form})
+        form = AffectationForm()
+    return render(request, 'affectation_form.html', {'form': form})
 
 @login_required
-def request_create(request):
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
+def affectation_update(request, pk):
+    affectation = Affectation.objects.get(pk=pk)
     if request.method == 'POST':
-        form = MaterialRequestForm(request.POST, user=request.user)
+        form = AffectationForm(request.POST, instance=affectation)
         if form.is_valid():
-            material_request = form.save(commit=False)
-            material_request.demandeur = request.user
-            material_request.etat = 'En attente'
-            material_request.save()
+            old_equipment = affectation.equipement
+            affectation = form.save(commit=False)
+            if old_equipment != affectation.equipement:
+                old_equipment.affecte = False
+                old_equipment.save()
+                affectation.equipement.affecte = True
+                affectation.equipement.save()
+            affectation.save()
+            Notification.objects.create(
+                message=f"Affectation modifiée: {affectation.equipement} à {affectation.fonctionnaire}",
+                personne=User.objects.filter(is_staff=True).first()
+            )
+            return redirect('notifications')
+    else:
+        form = AffectationForm(instance=affectation)
+    return render(request, 'affectation_form.html', {'form': form})
+
+@login_required
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
+def affectation_return(request, pk):
+    affectation = Affectation.objects.get(pk=pk)
+    if request.method == 'POST':
+        affectation.date_retour = timezone.now()
+        affectation.equipement.affecte = False
+        affectation.equipement.save()
+        affectation.save()
+        Notification.objects.create(
+            message=f"Retour d'affectation: {affectation.equipement} par {affectation.fonctionnaire}",
+            personne=User.objects.filter(is_staff=True).first()
+        )
+        return redirect('notifications')
+    return render(request, 'affectation_return.html', {'affectation': affectation})
+
+@login_required
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
+def notifications(request):
+    equipement_demandes = DemandeEquipement.objects.all().order_by('-date_creation')
+    intervention_demandes = DemandeIntervention.objects.all().order_by('-date')
+    notifications = Notification.objects.filter(personne=request.user).order_by('-date')
+    if request.method == 'POST':
+        notification_id = request.POST.get('notification_id')
+        if notification_id:
+            Notification.objects.filter(pk=notification_id, personne=request.user).update(read=True)
+        return redirect('notifications')
+    return render(request, 'notifications.html', {
+        'equipement_demandes': equipement_demandes,
+        'intervention_demandes': intervention_demandes,
+        'notifications': notifications,
+    })
+
+@login_required
+@user_passes_test(is_fonctionnaire)
+def mes_equipements(request):
+    affectations = Affectation.objects.filter(fonctionnaire=request.user, date_retour__isnull=True)
+    return render(request, 'mes_equipements.html', {'affectations': affectations})
+
+@login_required
+@user_passes_test(is_fonctionnaire)
+def demande_equipement_create(request):
+    if request.method == 'POST':
+        form = DemandeEquipementForm(request.POST)
+        if form.is_valid():
+            demande = form.save(commit=False)
+            demande.demandeur = request.user
+            demande.save()
             form.save_m2m()
-            equipements = form.cleaned_data['equipements']
-            types = set(equipement.type_materiel for equipement in equipements)
-            material_request.types_materiel.set(types)
-            return redirect('home')
+            Notification.objects.create(
+                message=f"Nouvelle demande d'équipement: {demande.objet} par {demande.demandeur}",
+                personne=User.objects.filter(is_staff=True).first()
+            )
+            return redirect('mes_equipements')
     else:
-        form = MaterialRequestForm(user=request.user)
-    material_types = MaterialType.objects.all()
-    return render(request, 'request_form.html', {'form': form, 'material_types': material_types})
+        form = DemandeEquipementForm()
+    return render(request, 'demande_equipement_form.html', {'form': form})
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
-def request_update(request, pk):
-    material_request = MaterialRequest.objects.get(pk=pk)
+@user_passes_test(is_fonctionnaire)
+def demande_intervention_create(request):
     if request.method == 'POST':
-        form = MaterialRequestForm(request.POST, instance=material_request, user=request.user)
+        form = DemandeInterventionForm(request.POST)
         if form.is_valid():
-            material_request.etat = form.cleaned_data['etat']
-            if material_request.etat == 'Validée':
-                for equipment in material_request.equipements.all():
-                    equipment.etat = 'Affecté'
-                    equipment.save()
-                    AssignmentHistory.objects.create(
-                        equipement=equipment,
-                        utilisateur=material_request.demandeur,
-                        demande=material_request
-                    )
-            elif material_request.etat == 'Refusée':
-                for equipment in material_request.equipements.all():
-                    equipment.etat = 'Disponible'
-                    equipment.save()
-                    AssignmentHistory.objects.filter(demande=material_request, retourne_le__isnull=True).update(retourne_le=timezone.now())
-                material_request.equipements.clear()
-            material_request.save()
-            return redirect('home')
+            demande = form.save(commit=False)
+            demande.demandeur = request.user
+            demande.save()
+            Notification.objects.create(
+                message=f"Nouvelle demande d'intervention: {demande.description[:50]} par {demande.demandeur}",
+                personne=User.objects.filter(is_staff=True).first()
+            )
+            return redirect('mes_equipements')
     else:
-        form = MaterialRequestForm(instance=material_request, user=request.user)
-    material_types = MaterialType.objects.all()
-    return render(request, 'request_form.html', {'form': form, 'material_types': material_types})
+        form = DemandeInterventionForm()
+    return render(request, 'demande_intervention_form.html', {'form': form})
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
-def request_delete(request, pk):
-    material_request = MaterialRequest.objects.get(pk=pk)
+@user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
+def demande_equipement_approve(request, pk):
+    demande = DemandeEquipement.objects.get(pk=pk)
     if request.method == 'POST':
-        for equipment in material_request.equipements.all():
-            equipment.etat = 'Disponible'
-            equipment.save()
-            AssignmentHistory.objects.filter(demande=material_request, retourne_le__isnull=True).update(retourne_le=timezone.now())
-        material_request.delete()
-        return redirect('home')
-    return render(request, 'request_delete.html', {'demande': material_request})
-
-@login_required
-def return_equipment(request, assignment_id):
-    assignment = AssignmentHistory.objects.get(pk=assignment_id)
-    if request.user == assignment.utilisateur and not assignment.retourne_le:
-        if request.method == 'POST':
-            assignment.retourne_le = timezone.now()
-            assignment.equipement.etat = 'Disponible'
-            assignment.demande.history = True
-            assignment.demande.save()
-            assignment.equipement.save()
-            assignment.save()
-            return redirect('home')
-        return render(request, 'return_confirm.html', {'assignment': assignment})
-    return redirect('home')
-
-@login_required
-def history_view(request):
-    if request.user.is_staff:
-        history = AssignmentHistory.objects.all()
-    else:
-        history = AssignmentHistory.objects.filter(utilisateur=request.user)
-    return render(request, 'history.html', {'history': history})
+        etat = request.POST.get('etat')
+        demande.etat = etat
+        if etat == 'Validée':
+            for equipement in demande.equipements.all():
+                if equipement.quantity >= demande.quantity:
+                    equipement.affecte = True
+                    equipement.quantity -= demande.quantity
+                    equipement.save()
+                    Affectation.objects.create(
+                        equipement=equipement,
+                        fonctionnaire=demande.demandeur,
+                        service=demande.service
+                    )
+        elif etat == 'Refusée':
+            demande.equipements.clear()
+        demande.save()
+        Notification.objects.create(
+            message=f"Demande d'équipement {demande.id} {etat} pour {demande.demandeur}",
+            personne=demande.demandeur
+        )
+        return redirect('notifications')
+    return render(request, 'demande_equipement_approve.html', {'demande': demande})

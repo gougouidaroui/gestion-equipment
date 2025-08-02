@@ -1,63 +1,94 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from .models import Equipment, MaterialType, MaterialRequest
+from .models import Equipment, Affectation, DemandeEquipement, DemandeIntervention
 
-class SignUpForm(UserCreationForm):
-    email = forms.EmailField(required=True, label='')
+class LoginForm(forms.Form):
+    email = forms.EmailField(
+        label='Email',
+        widget=forms.EmailInput(attrs={'placeholder': 'Email', 'class': 'form-control'})
+    )
+    password = forms.CharField(
+        label='Mot de passe',
+        widget=forms.PasswordInput(attrs={'placeholder': 'Mot de passe', 'class': 'form-control'})
+    )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['username'].label = ''
-        self.fields['password1'].label = ''
-        self.fields['password2'].label = ''
-        self.fields['username'].widget.attrs.update({'placeholder': 'Nom d’utilisateur', 'class': 'form-control'})
-        self.fields['email'].widget.attrs.update({'placeholder': 'Email', 'class': 'form-control'})
-        self.fields['password1'].widget.attrs.update({'placeholder': 'Mot de passe', 'class': 'form-control'})
-        self.fields['password2'].widget.attrs.update({'placeholder': 'Confirmer le mot de passe', 'class': 'form-control'})
-        self.fields['password2'].help_text = None
-
-    class Meta:
-        model = User
-        fields = ('username', 'email', 'password1', 'password2')
-
-class LoginForm(AuthenticationForm):
-    username = forms.CharField(label='', widget=forms.TextInput(attrs={'placeholder': 'Nom d’utilisateur', 'class': 'form-control'}))
-    password = forms.CharField(label='', widget=forms.PasswordInput(attrs={'placeholder': 'Mot de passe', 'class': 'form-control'}))
+class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    role = forms.ChoiceField(choices=[('admin', 'Admin'), ('gestionnaire', 'Gestionnaire'), ('fonctionnaire', 'Fonctionnaire')])
 
     class Meta:
         model = User
-        fields = ('username', 'password')
+        fields = ['username', 'email', 'password1', 'password2', 'role']
+
+class UserUpdateForm(forms.ModelForm):
+    email = forms.EmailField(required=True)
+    role = forms.ChoiceField(choices=[('admin', 'Admin'), ('gestionnaire', 'Gestionnaire'), ('fonctionnaire', 'Fonctionnaire')])
+    password = forms.CharField(
+        label='Mot de passe (optionnel)',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        required=False
+    )
+
+    class Meta:
+        model = User
+        fields = ['email', 'role']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        user_id = self.instance.id
+        if User.objects.filter(email=email).exclude(id=user_id).exists():
+            raise forms.ValidationError("Cet email est déjà utilisé par un autre utilisateur.")
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        password = self.cleaned_data.get('password')
+        if password:
+            user.set_password(password)
+        if commit:
+            user.save()
+        return user
 
 class EquipmentForm(forms.ModelForm):
     class Meta:
         model = Equipment
-        fields = ['nom', 'numero_serie', 'type_materiel', 'etat']
+        fields = ['cab_number', 'designation', 'type', 'sous_type', 'year', 'emplacement', 'quantity']
         widgets = {
-            'etat': forms.Select(),
+            'year': forms.NumberInput(attrs={'min': 1900, 'max': 2100}),
         }
 
-class MaterialTypeForm(forms.ModelForm):
+class AffectationForm(forms.ModelForm):
     class Meta:
-        model = MaterialType
-        fields = ['nom', 'description']
-
-class MaterialRequestForm(forms.ModelForm):
-    class Meta:
-        model = MaterialRequest
-        fields = ['equipements', 'commentaires', 'etat']
+        model = Affectation
+        fields = ['equipement', 'fonctionnaire', 'service']
         widgets = {
-            'equipements': forms.CheckboxSelectMultiple(),
-            'etat': forms.Select(),
+            'equipement': forms.Select(),
+            'fonctionnaire': forms.Select(),
         }
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        self.fields['equipements'].queryset = Equipment.objects.filter(etat='Disponible')
-        if user and user.is_staff:
-            self.fields.pop('equipements')
-            self.fields.pop('commentaires')
-        elif not user or not user.is_staff:
-            self.fields.pop('etat')
+        self.fields['equipement'].queryset = Equipment.objects.filter(affecte=False, quantity__gt=0)
+        self.fields['fonctionnaire'].queryset = User.objects.filter(is_staff=False, is_superuser=False)
 
+class DemandeEquipementForm(forms.ModelForm):
+    equipements = forms.ModelMultipleChoiceField(
+        queryset=Equipment.objects.filter(affecte=False, quantity__gt=0),
+        widget=forms.SelectMultiple(attrs={'class': 'form-control', 'data-live-search': 'true'})
+    )
+
+    class Meta:
+        model = DemandeEquipement
+        fields = ['objet', 'equipements', 'quantity', 'motif', 'service']
+        widgets = {
+            'motif': forms.Textarea(attrs={'rows': 4}),
+        }
+
+class DemandeInterventionForm(forms.ModelForm):
+    class Meta:
+        model = DemandeIntervention
+        fields = ['service', 'poste', 'description']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+        }

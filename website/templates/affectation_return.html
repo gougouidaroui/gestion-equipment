@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retour d'Affectation</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">Confirmer le Retour d'Affectation</h2>
+                <p><strong>Équipement:</strong> {{ affectation.equipement.designation }}</p>
+                <p><strong>Fonctionnaire:</strong> {{ affectation.fonctionnaire.email }}</p>
+                <p><strong>Service:</strong> {{ affectation.service }}</p>
+                <p><strong>Date d'Affectation:</strong> {{ affectation.date_affectation|date:"d/m/Y H:i" }}</p>
+                <p>Confirmer le retour de cet équipement ?</p>
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">Confirmer le Retour</button>
+                    <a href="{% url 'gestion_affectation' %}" class="btn btn-secondary">Annuler</a>
+                </form>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>

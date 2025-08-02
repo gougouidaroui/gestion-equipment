@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traiter la Demande d'Équipement</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">Traiter la Demande d'Équipement</h2>
+                <h4>Détails de la Demande</h4>
+                <p><strong>Objet:</strong> {{ demande.objet }}</p>
+                <p><strong>Demandeur:</strong> {{ demande.demandeur.email }}</p>
+                <p><strong>Équipements:</strong>
+                    {% for equipement in demande.equipements.all %}
+                        {{ equipement.designation }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+                <p><strong>Quantité:</strong> {{ demande.quantity }}</p>
+                <p><strong>Motif:</strong> {{ demande.motif }}</p>
+                <p><strong>Service:</strong> {{ demande.service }}</p>
+                <p><strong>État:</strong> {{ demande.etat }}</p>
+                <p><strong>Date:</strong> {{ demande.date_creation|date:"d/m/Y H:i" }}</p>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="etat" class="form-label">État</label>
+                        <select name="etat" class="form-select" required>
+                            <option value="En attente" {% if demande.etat == 'En attente' %}selected{% endif %}>En attente</option>
+                            <option value="Validée">Validée</option>
+                            <option value="Refusée">Refusée</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <a href="{% url 'notifications' %}" class="btn btn-secondary">Annuler</a>
+                </form>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>

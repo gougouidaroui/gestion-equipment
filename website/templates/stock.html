@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">Stock</h2>
+                <form method="GET" class="mb-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="type" class="form-label">Type</label>
+                            <input type="text" name="type" class="form-control" value="{{ type_filter }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="sous_type" class="form-label">Sous-type</label>
+                            <input type="text" name="sous_type" class="form-control" value="{{ sous_type_filter }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="emplacement" class="form-label">Emplacement</label>
+                            <input type="text" name="emplacement" class="form-control" value="{{ emplacement_filter }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="affecte" class="form-label">Affecté</label>
+                            <select name="affecte" class="form-select">
+                                <option value="">Tous</option>
+                                <option value="True" {% if affecte_filter == 'True' %}selected{% endif %}>Oui</option>
+                                <option value="False" {% if affecte_filter == 'False' %}selected{% endif %}>Non</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Filtrer</button>
+                </form>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Numéro CAB</th>
+                            <th>Désignation</th>
+                            <th>Type</th>
+                            <th>Sous-type</th>
+                            <th>Année</th>
+                            <th>Emplacement</th>
+                            <th>Quantité</th>
+                            <th>Affecté</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equipement in equipements %}
+                        <tr>
+                            <td>{{ equipement.cab_number }}</td>
+                            <td>{{ equipement.designation }}</td>
+                            <td>{{ equipement.type }}</td>
+                            <td>{{ equipement.sous_type }}</td>
+                            <td>{{ equipement.year }}</td>
+                            <td>{{ equipement.emplacement }}</td>
+                            <td>{{ equipement.quantity }}</td>
+                            <td>{{ equipement.affecte|yesno:"Oui,Non" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="8">Aucun équipement disponible.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>

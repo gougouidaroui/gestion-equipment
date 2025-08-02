@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion d'Équipement</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">Gestion d'Équipement</h2>
+                <a href="{% url 'equipment_create' %}" class="btn btn-primary btn-sm mb-4">Ajouter</a>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Numéro CAB</th>
+                            <th>Désignation</th>
+                            <th>Type</th>
+                            <th>Sous-type</th>
+                            <th>Année</th>
+                            <th>Emplacement</th>
+                            <th>Quantité</th>
+                            <th>Affecté</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equipement in equipements %}
+                        <tr>
+                            <td>{{ equipement.cab_number }}</td>
+                            <td>{{ equipement.designation }}</td>
+                            <td>{{ equipement.type }}</td>
+                            <td>{{ equipement.sous_type }}</td>
+                            <td>{{ equipement.year }}</td>
+                            <td>{{ equipement.emplacement }}</td>
+                            <td>{{ equipement.quantity }}</td>
+                            <td>{{ equipement.affecte|yesno:"Oui,Non" }}</td>
+                            <td>
+                                <a href="{% url 'equipment_update' equipement.pk %}" class="btn btn-sm btn-primary">Modifier</a>
+                                <a href="{% url 'equipment_delete' equipement.pk %}" class="btn btn-sm btn-danger">Supprimer</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="9">Aucun équipement disponible.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>

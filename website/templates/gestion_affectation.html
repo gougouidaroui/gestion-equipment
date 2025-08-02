@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Affectations</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">Gestion des Affectations</h2>
+                <a href="{% url 'affectation_create' %}" class="btn btn-primary btn-sm mb-4">Ajouter</a>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Équipement</th>
+                            <th>Fonctionnaire</th>
+                            <th>Service</th>
+                            <th>Date d'Affectation</th>
+                            <th>Date de Retour</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for affectation in affectations %}
+                        <tr>
+                            <td>{{ affectation.equipement.designation }}</td>
+                            <td>{{ affectation.fonctionnaire.email }}</td>
+                            <td>{{ affectation.service }}</td>
+                            <td>{{ affectation.date_affectation|date:"d/m/Y H:i" }}</td>
+                            <td>{{ affectation.date_retour|date:"d/m/Y H:i"|default:"En cours" }}</td>
+                            <td>
+                                <a href="{% url 'affectation_update' affectation.pk %}" class="btn btn-sm btn-primary">Modifier</a>
+                                {% if not affectation.date_retour %}
+                                    <a href="{% url 'affectation_return' affectation.pk %}" class="btn btn-sm btn-warning">Retour</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6">Aucune affectation disponible.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>

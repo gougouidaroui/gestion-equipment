@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Utilisateurs</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">Gestion des Utilisateurs</h2>
+                <a href="{% url 'user_create' %}" class="btn btn-primary mb-4">Ajouter un Utilisateur</a>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nom d'utilisateur</th>
+                            <th>Email</th>
+                            <th>Rôle</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.is_superuser %}
+                                    Admin
+                                {% elif user.is_staff %}
+                                    Gestionnaire
+                                {% else %}
+                                    Fonctionnaire
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'modify_user' user.pk %}" class="btn btn-sm btn-primary">Modifier</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">Aucun utilisateur disponible.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>

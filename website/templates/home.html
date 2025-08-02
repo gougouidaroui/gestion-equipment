@@ -10,115 +10,14 @@
     <link rel="stylesheet" href="{% static 'css/home.css' %}">
 </head>
 <body>
-    <main>
-        {% include 'sidebar.html' %}
-        <div class="container-fluid">
-            <div class="card shadow-sm p-5 mb-4">
-                <h2 class="mb-4">Bienvenue{% if user.is_authenticated %}, {{ user.username }}{% endif %}!</h2>
-            </div>
-            {% if user.is_authenticated %}
-            <div class="card shadow-sm p-5 mb-4">
-                <h3 class="mb-4">Équipements</h3>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Nom</th>
-                            <th>Numéro de série</th>
-                            <th>Type</th>
-                            <th>État</th>
-                            {% if user.is_staff %}
-                            <th>Actions</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for equipement in equipements %}
-                        <tr>
-                            <td>{{ equipement.nom }}</td>
-                            <td>{{ equipement.numero_serie }}</td>
-                            <td>{{ equipement.type_materiel }}</td>
-                            <td>{{ equipement.get_etat_display }}</td>
-                            {% if user.is_staff %}
-                            <td>
-                                <a href="{% url 'equipment_update' equipement.pk %}" class="btn btn-sm btn-primary px-3">Modifier</a>
-                                <a href="{% url 'equipment_delete' equipement.pk %}" class="btn btn-sm btn-danger px-3">Supprimer</a>
-                            </td>
-                            {% endif %}
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="{% if user.is_staff %}5{% else %}4{% endif %}">Aucun équipement disponible.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="card shadow-sm p-5">
-                <h3 class="mb-4">Demandes</h3>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Demandeur</th>
-                            <th>Équipements</th>
-                            <th>État</th>
-                            <th>Commentaires</th>
-                            {% if user.is_staff %}
-                            <th>Actions</th>
-                            {% else %}
-                            <th>Retour</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for demande in demandes %}
-                        <tr>
-                            <td>{{ demande.id }}</td>
-                            <td>{{ demande.demandeur.username }}</td>
-                            <td>
-                                {% for equipement in demande.equipements.all %}
-                                {{ equipement.nom }} ({{ equipement.type_materiel }}){% if not forloop.last %}, {% endif %}
-                                {% empty %}
-                                Aucun équipement
-                                {% endfor %}
-                            </td>
-                            <td>{{ demande.get_etat_display }}</td>
-                            <td>{{ demande.commentaires|truncatewords:10 }}</td>
-                            {% if user.is_staff %}
-                            <td>
-                                <a href="{% url 'request_update' demande.pk %}" class="btn btn-sm btn-primary px-3">Mise a jour</a>
-                                <a href="{% url 'request_delete' demande.pk %}" class="btn btn-sm btn-danger px-3">Supprimer</a>
-                            </td>
-                            {% else %}
-                            <td>
-                                {% for assignment in demande.assignmenthistory_set.all %}
-                                {% if assignment.utilisateur == user and not assignment.retourne_le %}
-                                <a href="{% url 'return_equipment' assignment.id %}" class="btn btn-sm btn-warning px-3">Retourner</a>
-                                {% endif %}
-                                {% endfor %}
-                            </td>
-                            {% endif %}
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="{% if user.is_staff %}6{% else %}5{% endif %}">Aucune demande disponible.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="card shadow-sm p-5">
-                <p>Veuillez vous <a href="{% url 'login' %}">connecter</a> ou <a href="{% url 'register' %}">vous inscrire</a>.</p>
-            </div>
-            {% endif %}
-        </div>
-    </main>
+    <header class="header">
+        <img src="{% static 'images/logo.svg' %}" alt="Ministère du Transport et de la Logistique" class="ministry-logo-img">
+        <a href="{% url 'login' %}" class="btn btn-primary">Connexion</a>
+    </header>
+    <div class="welcome-container">
+        <h1>Bienvenue sur le Système de Gestion de Stock</h1>
+        <p>Veuillez vous connecter pour accéder à la gestion des équipements.</p>
+    </div>
     {% bootstrap_javascript %}
-    <script>
-        (function () {
-            'use strict'
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-                new bootstrap.Tooltip(tooltipTriggerEl)
-            })
-        })()
-    </script>
 </body>
 </html>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if form.instance.pk %}Modifier{% else %}Ajouter{% endif %} Équipement</title>
+    <title>Modifier Utilisateur</title>
     {% load bootstrap5 %}
     {% bootstrap_css %}
     <link rel="stylesheet" href="{% static 'css/home.css' %}">
@@ -14,7 +14,7 @@
         {% include 'sidebar.html' %}
         <div class="container-fluid">
             <div class="card shadow-sm p-5">
-                <h2 class="mb-4">{% if form.instance.pk %}Modifier{% else %}Ajouter{% endif %} Équipement</h2>
+                <h2 class="mb-4">Modifier Utilisateur</h2>
                 {% if form.errors %}
                     <div class="alert alert-danger">
                         {% for field in form %}
@@ -31,7 +31,7 @@
                     {% csrf_token %}
                     {{ form.as_p }}
                     <button type="submit" class="btn btn-primary">Enregistrer</button>
-                    <a href="{% url 'stock' %}" class="btn btn-secondary">Annuler</a>
+                    <a href="{% url 'user_list' %}" class="btn btn-secondary">Annuler</a>
                 </form>
             </div>
         </div>
