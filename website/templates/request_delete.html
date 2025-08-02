@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supprimer la demande</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">Supprimer la demande</h2>
+                <p>Voulez-vous supprimer la demande n°{{ demande.id }} de {{ demande.demandeur.username }} ?</p>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-danger px-4">Supprimer</button>
+                        <a href="{% url 'home' %}" class="btn btn-secondary px-4">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>

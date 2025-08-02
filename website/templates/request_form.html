@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if form.instance.pk %}Approuver{% else %}Nouvelle{% endif %} Demande</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">{% if form.instance.pk %}Approuver Demande{% else %}Nouvelle Demande{% endif %}</h2>
+                <form method="POST">
+                    {% csrf_token %}
+                    {% if user.is_staff %}
+                    <div class="mb-4">
+                        <label class="form-label">Équipements</label>
+                        <div class="checkbox-container">
+                            {% for type in material_types %}
+                            <h5>{{ type.nom }}</h5>
+                            {% for equipment in form.instance.equipements.all %}
+                            {% if equipment.type_materiel == type %}
+                            <p>{{ equipment.nom }} ({{ equipment.numero_serie }})</p>
+                            {% endif %}
+                            {% endfor %}
+                            {% empty %}
+                            <p>Aucun équipement sélectionné.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Commentaires</label>
+                        <p>{{ form.instance.commentaires|default:"Aucun commentaire" }}</p>
+                    </div>
+                    <div class="mb-4">
+                        <label for="id_etat" class="form-label">État</label>
+                        {{ form.etat }}
+                    </div>
+                    {% else %}
+                    <div class="mb-4">
+                        <label class="form-label">Équipements</label>
+                        {% for type in material_types %}
+                        <div class="mb-3">
+                            <h5>{{ type.nom }}</h5>
+                            <div class="checkbox-container">
+                                {% for equipment in form.equipements.field.queryset %}
+                                {% if equipment.type_materiel == type %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="equipements" value="{{ equipment.id }}" id="id_equipements_{{ equipment.id }}" {% if equipment in form.equipements.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="id_equipements_{{ equipment.id }}">{{ equipment.nom }} ({{ equipment.numero_serie }})</label>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p>Aucun type de matériel disponible.</p>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-4">
+                        <label for="id_commentaires" class="form-label">Commentaires</label>
+                        {{ form.commentaires }}
+                    </div>
+                    {% endif %}
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary px-4">{% if user.is_staff %}Enregistrer{% else %}Soumettre{% endif %}</button>
+                        <a href="{% url 'home' %}" class="btn btn-secondary px-4">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>

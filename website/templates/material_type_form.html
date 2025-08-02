@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter Type de Matériel</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-4">
+                <h2>Ajouter Type de Matériel</h2>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="id_nom" class="form-label">Nom</label>
+                        {{ form.nom }}
+                    </div>
+                    <div class="mb-4">
+                        <label for="id_description" class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                        <a href="{% url 'home' %}" class="btn btn-secondary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>
