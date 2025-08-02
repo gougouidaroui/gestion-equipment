@@ -81,6 +81,15 @@ def modify_user(request, pk):
         form = UserUpdateForm(instance=user, initial={'role': 'admin' if user.is_superuser else 'gestionnaire' if user.is_staff else 'fonctionnaire'})
     return render(request, 'modify_user.html', {'form': form, 'user': user})
 
+@login_required
+@user_passes_test(is_admin)
+def user_delete(request, pk):
+    user = User.objects.get(pk=pk)
+    if request.method == 'POST':
+        user.delete()
+        return redirect('user_list')
+    return render(request, 'user_delete.html', {'user': user})
+
 
 @login_required
 @user_passes_test(lambda u: is_admin(u) or is_gestionnaire(u))
@@ -216,13 +225,24 @@ def affectation_return(request, pk):
     if request.method == 'POST':
         affectation.date_retour = timezone.now()
         affectation.equipement.affecte = False
+        # Find the related DemandeEquipement to get the quantity
+        try:
+            demande = DemandeEquipement.objects.get(
+                equipements=affectation.equipement,
+                demandeur=affectation.fonctionnaire,
+                service=affectation.service,
+                etat='Validée'
+            )
+            affectation.equipement.quantity += demande.quantity
+        except DemandeEquipement.DoesNotExist:
+            affectation.equipement.quantity += 1  # Fallback: assume 1 if no demande found
         affectation.equipement.save()
         affectation.save()
         Notification.objects.create(
             message=f"Retour d'affectation: {affectation.equipement} par {affectation.fonctionnaire}",
             personne=User.objects.filter(is_staff=True).first()
         )
-        return redirect('notifications')
+        return redirect('gestion_affectation')
     return render(request, 'affectation_return.html', {'affectation': affectation})
 
 @login_required
@@ -231,15 +251,43 @@ def notifications(request):
     equipement_demandes = DemandeEquipement.objects.all().order_by('-date_creation')
     intervention_demandes = DemandeIntervention.objects.all().order_by('-date')
     notifications = Notification.objects.filter(personne=request.user).order_by('-date')
+
+    # Filters for DemandeEquipement
+    etat_equipement = request.GET.get('etat_equipement', '')
+    demandeur_equipement = request.GET.get('demandeur_equipement', '')
+    date_equipement = request.GET.get('date_equipement', '')
+
+    if etat_equipement:
+        equipement_demandes = equipement_demandes.filter(etat=etat_equipement)
+    if demandeur_equipement:
+        equipement_demandes = equipement_demandes.filter(demandeur__email__icontains=demandeur_equipement)
+    if date_equipement:
+        equipement_demandes = equipement_demandes.filter(date_creation__date=date_equipement)
+
+    # Filters for DemandeIntervention
+    demandeur_intervention = request.GET.get('demandeur_intervention', '')
+    date_intervention = request.GET.get('date_intervention', '')
+
+    if demandeur_intervention:
+        intervention_demandes = intervention_demandes.filter(demandeur__email__icontains=demandeur_intervention)
+    if date_intervention:
+        intervention_demandes = intervention_demandes.filter(date__date=date_intervention)
+
     if request.method == 'POST':
         notification_id = request.POST.get('notification_id')
         if notification_id:
             Notification.objects.filter(pk=notification_id, personne=request.user).update(read=True)
         return redirect('notifications')
+
     return render(request, 'notifications.html', {
         'equipement_demandes': equipement_demandes,
         'intervention_demandes': intervention_demandes,
         'notifications': notifications,
+        'etat_equipement': etat_equipement,
+        'demandeur_equipement': demandeur_equipement,
+        'date_equipement': date_equipement,
+        'demandeur_intervention': demandeur_intervention,
+        'date_intervention': date_intervention,
     })
 
 @login_required

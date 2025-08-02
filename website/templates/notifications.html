@@ -16,6 +16,30 @@
             <div class="card shadow-sm p-5">
                 <h2 class="mb-4">Notifications</h2>
                 <h3 class="mb-3">Demandes d'Équipement</h3>
+                <form method="GET" class="mb-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="etat_equipement" class="form-label">État</label>
+                            <select name="etat_equipement" class="form-select">
+                                <option value="">Tous</option>
+                                <option value="En attente" {% if etat_equipement == 'En attente' %}selected{% endif %}>En attente</option>
+                                <option value="Validée" {% if etat_equipement == 'Validée' %}selected{% endif %}>Validée</option>
+                                <option value="Refusée" {% if etat_equipement == 'Refusée' %}selected{% endif %}>Refusée</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="demandeur_equipement" class="form-label">Demandeur</label>
+                            <input type="text" name="demandeur_equipement" class="form-control" value="{{ demandeur_equipement }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_equipement" class="form-label">Date</label>
+                            <input type="date" name="date_equipement" class="form-control" value="{{ date_equipement }}">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
+                        </div>
+                    </div>
+                </form>
                 <table class="table table-striped mb-5">
                     <thead>
                         <tr>
@@ -57,6 +81,21 @@
                     </tbody>
                 </table>
                 <h3 class="mb-3">Demandes d'Intervention</h3>
+                <form method="GET" class="mb-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="demandeur_intervention" class="form-label">Demandeur</label>
+                            <input type="text" name="demandeur_intervention" class="form-control" value="{{ demandeur_intervention }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_intervention" class="form-label">Date</label>
+                            <input type="date" name="date_intervention" class="form-control" value="{{ date_intervention }}">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
+                        </div>
+                    </div>
+                </form>
                 <table class="table table-striped mb-5">
                     <thead>
                         <tr>

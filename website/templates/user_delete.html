@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supprimer Utilisateur</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">Supprimer Utilisateur</h2>
+                <p><strong>Nom d'utilisateur:</strong> {{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Rôle:</strong>
+                    {% if user.is_superuser %}
+                        Admin
+                    {% elif user.is_staff %}
+                        Gestionnaire
+                    {% else %}
+                        Fonctionnaire
+                    {% endif %}
+                </p>
+                <p>Confirmer la suppression de cet utilisateur ? Cette action est irréversible.</p>
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Confirmer la Suppression</button>
+                    <a href="{% url 'user_list' %}" class="btn btn-secondary">Annuler</a>
+                </form>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>
