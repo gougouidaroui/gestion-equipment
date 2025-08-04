@@ -1,3 +1,4 @@
+from typing import Required
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
@@ -51,12 +52,14 @@ class UserUpdateForm(forms.ModelForm):
         return user
 
 class EquipmentForm(forms.ModelForm):
+    year= forms.IntegerField(
+        label='Année',
+        widget=forms.NumberInput(attrs={'min': 1900, 'max': 2100}),
+        required=True
+    )
     class Meta:
         model = Equipment
         fields = ['cab_number', 'designation', 'type', 'sous_type', 'year', 'emplacement', 'quantity']
-        widgets = {
-            'year': forms.NumberInput(attrs={'min': 1900, 'max': 2100}),
-        }
 
 class AffectationForm(forms.ModelForm):
     quantity = forms.IntegerField(

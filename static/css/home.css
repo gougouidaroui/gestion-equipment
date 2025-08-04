@@ -84,21 +84,22 @@ main {
 }
 
 .btn-primary {
+    width: 100%;
     background-color: #3498db;
     border: none;
     border-radius: 8px;
-    padding: 10px 20px;
 }
 
 .btn-primary:hover {
+    width: 100%;
     background-color: #2980b9;
 }
 
 .btn-secondary {
+    width: 100%;
     background-color: #7f8c8d;
     border: none;
     border-radius: 8px;
-    padding: 10px 20px;
 }
 
 .btn-secondary:hover {
@@ -106,10 +107,10 @@ main {
 }
 
 .btn-warning {
+    width: 100%;
     background-color: #f39c12;
     border: none;
     border-radius: 8px;
-    padding: 10px 20px;
 }
 
 .btn-warning:hover {
@@ -117,10 +118,10 @@ main {
 }
 
 .btn-danger {
+    width: 100%;
     background-color: #e74c3c;
     border: none;
     border-radius: 8px;
-    padding: 10px 20px;
 }
 
 .btn-danger:hover {

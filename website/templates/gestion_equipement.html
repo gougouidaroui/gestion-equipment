@@ -8,6 +8,16 @@
     {% load bootstrap5 %}
     {% bootstrap_css %}
     <link rel="stylesheet" href="{% static 'css/home.css' %}">
+        <style>
+        table {
+            width: 100%;
+            table-layout:fixed;
+        }
+        a.btn {
+            width:100%;
+            padding: 0.3rem !important;
+        }
+        </style>
 </head>
 <body>
     <main>
@@ -16,7 +26,7 @@
             <div class="card shadow-sm p-5">
                 <h2 class="mb-4">Gestion d'Équipement</h2>
                 <a href="{% url 'equipment_create' %}" class="btn btn-primary btn-sm mb-4">Ajouter</a>
-                <table class="table table-striped">
+                <table class="table table-striped w-full">
                     <thead>
                         <tr>
                             <th>Numéro CAB</th>
