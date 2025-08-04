@@ -135,9 +135,6 @@ main {
 .table th, .table td {
     padding: 15px;
 }
-.table td:has(a) {
-    padding: 0 !important;
-}
 
 .form-control, .form-select {
     border-radius: 8px;

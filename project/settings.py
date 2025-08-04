@@ -83,8 +83,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'task_manager_db',
-        'USER': 'db_user',
-        'PASSWORD': '1234',
+        'USER': 'sa',
+        'PASSWORD': 'YourStrong@Passw0rd',
         'HOST': 'localhost',  # Docker service name
         'PORT': '1433',
         'OPTIONS': {
@@ -130,6 +130,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = 'staticfiles/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
