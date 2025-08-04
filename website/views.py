@@ -183,13 +183,14 @@ def affectation_create(request):
         if form.is_valid():
             affectation = form.save(commit=False)
             affectation.equipement.affecte = True
+            affectation.equipement.quantity -= affectation.quantity
             affectation.equipement.save()
             affectation.save()
             Notification.objects.create(
-                message=f"Nouvelle affectation: {affectation.equipement} à {affectation.fonctionnaire}",
+                message=f"Nouvelle affectation: {affectation.equipement} ({affectation.quantity}) à {affectation.fonctionnaire}",
                 personne=User.objects.filter(is_staff=True).first()
             )
-            return redirect('notifications')
+            return redirect('gestion_affectation')
     else:
         form = AffectationForm()
     return render(request, 'affectation_form.html', {'form': form})
@@ -202,18 +203,25 @@ def affectation_update(request, pk):
         form = AffectationForm(request.POST, instance=affectation)
         if form.is_valid():
             old_equipment = affectation.equipement
+            old_quantity = affectation.quantity
             affectation = form.save(commit=False)
             if old_equipment != affectation.equipement:
                 old_equipment.affecte = False
+                old_equipment.quantity += old_quantity
                 old_equipment.save()
                 affectation.equipement.affecte = True
+                affectation.equipement.quantity -= affectation.quantity
+                affectation.equipement.save()
+            else:
+                quantity_diff = affectation.quantity - old_quantity
+                affectation.equipement.quantity -= quantity_diff
                 affectation.equipement.save()
             affectation.save()
             Notification.objects.create(
-                message=f"Affectation modifiée: {affectation.equipement} à {affectation.fonctionnaire}",
+                message=f"Affectation modifiée: {affectation.equipement} ({affectation.quantity}) à {affectation.fonctionnaire}",
                 personne=User.objects.filter(is_staff=True).first()
             )
-            return redirect('notifications')
+            return redirect('gestion_affectation')
     else:
         form = AffectationForm(instance=affectation)
     return render(request, 'affectation_form.html', {'form': form})
@@ -225,21 +233,11 @@ def affectation_return(request, pk):
     if request.method == 'POST':
         affectation.date_retour = timezone.now()
         affectation.equipement.affecte = False
-        # Find the related DemandeEquipement to get the quantity
-        try:
-            demande = DemandeEquipement.objects.get(
-                equipements=affectation.equipement,
-                demandeur=affectation.fonctionnaire,
-                service=affectation.service,
-                etat='Validée'
-            )
-            affectation.equipement.quantity += demande.quantity
-        except DemandeEquipement.DoesNotExist:
-            affectation.equipement.quantity += 1  # Fallback: assume 1 if no demande found
+        affectation.equipement.quantity += affectation.quantity
         affectation.equipement.save()
         affectation.save()
         Notification.objects.create(
-            message=f"Retour d'affectation: {affectation.equipement} par {affectation.fonctionnaire}",
+            message=f"Retour d'affectation: {affectation.equipement} ({affectation.quantity}) par {affectation.fonctionnaire}",
             personne=User.objects.filter(is_staff=True).first()
         )
         return redirect('gestion_affectation')

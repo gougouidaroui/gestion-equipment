@@ -59,18 +59,35 @@ class EquipmentForm(forms.ModelForm):
         }
 
 class AffectationForm(forms.ModelForm):
+    quantity = forms.IntegerField(
+        label='Quantité',
+        min_value=1,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+
     class Meta:
         model = Affectation
-        fields = ['equipement', 'fonctionnaire', 'service']
+        fields = ['equipement', 'fonctionnaire', 'service', 'quantity']
         widgets = {
-            'equipement': forms.Select(),
-            'fonctionnaire': forms.Select(),
+            'equipement': forms.Select(attrs={'class': 'form-control'}),
+            'fonctionnaire': forms.Select(attrs={'class': 'form-control'}),
+            'service': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['equipement'].queryset = Equipment.objects.filter(affecte=False, quantity__gt=0)
         self.fields['fonctionnaire'].queryset = User.objects.filter(is_staff=False, is_superuser=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        equipement = cleaned_data.get('equipement')
+        quantity = cleaned_data.get('quantity')
+        if equipement and quantity:
+            if quantity > equipement.quantity:
+                raise forms.ValidationError(f"La quantité demandée ({quantity}) dépasse la quantité disponible ({equipement.quantity}) pour cet équipement.")
+        return cleaned_data
+
 
 class DemandeEquipementForm(forms.ModelForm):
     equipements = forms.ModelMultipleChoiceField(

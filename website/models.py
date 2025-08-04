@@ -20,6 +20,7 @@ class Affectation(models.Model):
     equipement = models.ForeignKey(Equipment, on_delete=models.CASCADE)
     fonctionnaire = models.ForeignKey(User, on_delete=models.CASCADE)
     service = models.CharField(max_length=100)
+    quantity = models.PositiveIntegerField(default=1)  # New field for quantity
     date_retour = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):

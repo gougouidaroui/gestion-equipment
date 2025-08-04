@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if form.instance.pk %}Modifier{% else %}Créer{% endif %} Affectation</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <main>
+        {% include 'sidebar.html' %}
+        <div class="container-fluid">
+            <div class="card shadow-sm p-5">
+                <h2 class="mb-4">{% if form.instance.pk %}Modifier{% else %}Créer{% endif %} Affectation</h2>
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <a href="{% url 'gestion_affectation' %}" class="btn btn-secondary">Annuler</a>
+                </form>
+            </div>
+        </div>
+    </main>
+    {% bootstrap_javascript %}
+</body>
+</html>

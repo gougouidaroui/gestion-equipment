@@ -22,6 +22,7 @@
                             <th>Équipement</th>
                             <th>Fonctionnaire</th>
                             <th>Service</th>
+                            <th>Quantité</th>
                             <th>Date d'Affectation</th>
                             <th>Date de Retour</th>
                             <th>Actions</th>
@@ -33,6 +34,7 @@
                             <td>{{ affectation.equipement.designation }}</td>
                             <td>{{ affectation.fonctionnaire.email }}</td>
                             <td>{{ affectation.service }}</td>
+                            <td>{{ affectation.quantity }}</td>
                             <td>{{ affectation.date_affectation|date:"d/m/Y H:i" }}</td>
                             <td>{{ affectation.date_retour|date:"d/m/Y H:i"|default:"En cours" }}</td>
                             <td>
@@ -43,7 +45,7 @@
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="6">Aucune affectation disponible.</td></tr>
+                        <tr><td colspan="7">Aucune affectation disponible.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
