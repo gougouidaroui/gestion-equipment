@@ -120,37 +120,6 @@
                         {% endfor %}
                     </tbody>
                 </table>
-                <h3 class="mb-3">Notifications</h3>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Message</th>
-                            <th>Personne</th>
-                            <th>Lu</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for notification in notifications %}
-                        <tr>
-                            <td>{{ notification.message }}</td>
-                            <td>{{ notification.personne.email }}</td>
-                            <td>{{ notification.read|yesno:"Oui,Non" }}</td>
-                            <td>
-                                {% if not notification.read %}
-                                    <form method="POST">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="notification_id" value="{{ notification.pk }}">
-                                        <button type="submit" class="btn btn-sm btn-primary">Marquer comme lu</button>
-                                    </form>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4">Aucune notification.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
             </div>
         </div>
     </main>

@@ -83,8 +83,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'task_manager_db',
-        'USER': 'db_user',
-        'PASSWORD': '1234',
+        'USER': 'sa',
+        'PASSWORD': 'YourStrong@Passw0rd',
         'HOST': 'localhost',  # Docker service name
         'PORT': '1433',
         'OPTIONS': {
